@@ -1,31 +1,12 @@
 const mongoose = require('mongoose')
 const bikeTypeSchema = new mongoose.Schema({
-    _id :{
-        type : String,
-        lowercase : true,
-        required : true,
-    },
-
-    company:{
-        type : String,
-        lowercase : true,
-        required : true,
-        
-    },
-    model : {
-        type : String,
-        lowercase : true,
-        required : true
-    },
-    type : {
+ // remove model
+    name : {
         type : String,
         required : true,
-        lowercase : true
+        lowercase : true,
+        unique : true
     }
-
-
-
-
 })
 
 const BikeType = mongoose.model('BikeType',bikeTypeSchema)

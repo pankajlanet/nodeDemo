@@ -1,70 +1,53 @@
-const express = require('express');
-const router =  express.Router();
+const express  =require('express')
+const router = express.Router()
+const Bikes = require('../models/Bikes')
 const BikesType = require('../models/BikeType')
 
 
-
-// #create bike types
-        // #create bike types
-//       #get all bike types
-//       #create bike
-//       #edit bike
-//       #delete bike
-//       #get all bikes
-//       #get bikes by bike types
-//       #get most recent regestered bikes 
-//       #get most liked bikes
-
-//       #comment on bike
-
-
-//********************************************************************************************** */
-                                    // Bikes Type
-//********************************************************************************************** */
-// #get all bike types
-router.post('/bikes/create_type' ,async(req , res) => {
-
-    //validation
-    const check = Object.keys(req.body)
-    const allowedUpdates = ["company", "model", "type"]
-    if(check.length === 0)
-    {
-        res.status(400).send({error : "Please enter the information in body"})
-    }   
-    const validCheckArr =  check.every(val => allowedUpdates.includes(val))
-    if(!validCheckArr)
-    {
-        res.status(403).send({ err: "extra updates are not allowed"})
-    }
-
-
-
-    // saving bike information in db
-    try{
-    const newBikeType = await new BikesType({...req.body , _id : req.body.company.toLowerCase() + req.body.model.toLowerCase()})
-    await newBikeType.save()
-    res.status(201).send({status : "created a new bike type" , ...req.body } )
-    }
-    catch(e)
-    {
-        res.send({
-            error : e.message
-        })
-    }
-} )
-
-router.get('/bikes/all_type' ,async(req,res)=> {
-    const bikeslist = await BikesType.find()
-    res.send(bikeslist)
-})
-
-//********************************************************************************************** */
-                                    // Bikes
-//********************************************************************************************** */
-
 // #create bike
-router.post('/bike' , (req,res)=> {
-    res.send("New bike created") 
+router.post('/bike' , async(req,res)=> {
+      const updates = Object.keys(req.body);
+      if(updates.length === 0) 
+      {
+          res.status(400).send({
+              error : "Please enter dome details in body"
+          })
+      }
+      
+      const allowedUpdates = ['company', "maxspeed","price","liked","comment", "name"]
+      const valid = updates.every(val => allowedUpdates.includes(val))
+      if(!valid)
+      {
+        res.status(400).send({
+            error : "extra updates are not allowed"
+        })
+      }
+
+      try{
+       const checkBike =  await BikesType.find({name : req.body.name})
+       console.log(checkBike)
+       if(checkBike.length === 0 )
+       {
+           res.send("bike with certain model is not present")
+       }    
+      }
+      catch(e)
+      {
+           res.send({error : e.message} ) 
+      }
+
+
+      try{
+      const bike = await new Bikes(req.body)
+      await bike.save()
+      res.status(201).send({status : "bike created " , ...req.body})
+      }
+      catch(e)
+      {
+          res.status(400).send({error : e.message})
+      }
+
+
 
 })
 
@@ -105,12 +88,9 @@ router.get('/bike/recent', (req,res)=> {
 
 // #comment on bike
     router.post('/bike/comment' , (req,res) => {
-        res.send("comment on bike")
+        res.status(400).send("comment on bike")
     })
 
 
 
-
-
-
-module.exports = router
+    module.exports = router
