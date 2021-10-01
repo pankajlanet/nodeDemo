@@ -225,6 +225,9 @@
     "xdg-basedir": "^4.0.0",
     "yallist": "^4.0.0"
   },
+  "devDependencies": {
+    "nodemon": "^2.0.13"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev" : "nodemon src/index.js"
@@ -238,8 +241,5 @@
   "bugs": {
     "url": "https://github.com/pankajlanet/nodeDemo/issues"
   },
-  "homepage": "https://github.com/pankajlanet/nodeDemo#readme",
-  "devDependencies": {
-    "nodemon": "^2.0.13"
-  }
+  "homepage": "https://github.com/pankajlanet/nodeDemo#readme"
 }

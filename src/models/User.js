@@ -68,7 +68,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
   }
   console.log(password)
   console.log(user.password)
-  const isMatch = await bcrypt.compare( password.trim(),user.password);
+  const isMatch =  bcrypt.compare( password.trim(),user.password);
     // const isMatch = true  
  console.log(isMatch)
 
@@ -81,7 +81,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
 userSchema.pre('save', async function (next) {
     const user = this;
     console.log("This middle ware is called")
-    user.password = await bcrypt.hash(user.password, 8)
+    user.password = await bcrypt.hash(user.password.trim(), 8)
 
     next()
 }  )
