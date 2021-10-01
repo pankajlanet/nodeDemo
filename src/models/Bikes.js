@@ -19,11 +19,23 @@ const bikeSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  name : {
+      type : String,
+      required:true,
+      lowercase : true,
+      trim : true
+  },
   comment: {
-    type: Boolean,
+    type: String,
     lowercase: true,
     trim: true,
   },
+
+  compositekey : {
+    type : String,
+    lowercase : true,
+    trim : true
+  }
 }, {timestamps :true});
 
 const Bike = mongoose.model("Bike", bikeSchema);

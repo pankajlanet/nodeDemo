@@ -47,6 +47,11 @@ router.post('/bikes/create_type' ,async(req , res) => {
     }
     catch(e)
     {
+        if(e.message.includes('E11000 duplicate key error collection: bike-register-api.biketypes index: name_1 dup key: '))
+        {
+            res.send({error : "This model is already present"})
+        }
+
         res.send({
             error : e.message
         })
@@ -54,8 +59,14 @@ router.post('/bikes/create_type' ,async(req , res) => {
 } )
 
 router.get('/bikes/all_type' ,async(req,res)=> {
+    try{
     const bikeslist = await BikesType.find()
     res.send(bikeslist)
+    }
+    catch(e)
+    {
+        res.send({error : e})
+    }
 })
 
 

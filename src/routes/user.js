@@ -38,6 +38,11 @@ router.post("/user", async (req, res) => {
     await user.save();
     res.status(201).send(req.body);
   } catch (e) {
+    if(e.message.includes('E11000 duplicate key error collection: bike-register-api.users index: email_1 dup key:'))
+    {
+      res.send({error : "Email id already exist"})
+    }
+
     res.status(400).send({ error: e.message });
   }
 });
