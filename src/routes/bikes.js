@@ -1,6 +1,7 @@
 const express  =require('express')
 const router = express.Router()
-const Bikes = require('../models/Bikes')
+const Bikes = require('../models/Bikes');
+const BikeType = require('../models/BikeType');
 const BikesType = require('../models/BikeType')
 
 
@@ -41,32 +42,72 @@ router.post("/bike", async (req, res) => {
         error: "This bike is already present",
       });
     }
+
+    else{
+        try {
+            const bike = await new Bikes({
+              ...req.body,
+              compositekey: req.body.company + req.body.name,
+            });
+            await bike.save();
+            res.status(201).send({ status: "bike created ", ...req.body });
+          } catch (e) {
+            // sending reponse when some error occured
+            res.status(400).send({ error: e.message });
+          }
+    }
   } catch (e) {}
 
   //creating the new bike
-  try {
-    const bike = await new Bikes({
-      ...req.body,
-      compositekey: req.body.company + req.body.name,
-    });
-    await bike.save();
-    res.status(201).send({ status: "bike created ", ...req.body });
-  } catch (e) {
-    // sending reponse when some error occured
-    res.status(400).send({ error: e.message });
-  }
+  
 });
 
 
 // #edit bike
 
-router.patch('/bike/:id' , (req,res)=> {
-    res.send("updating bike")
+router.patch('/bike/:id' , async(req,res)=> {
+    const updates = Object.keys(req.body)
+    const allowedUpdates = ["company","maxspeed","price","liked","comment",  "name"]
+
+    if(updates.length === 0)
+    {
+        res.send({error : "please send data in body"})
+    }
+
+    try{
+        const bike = await Bikes.findByIdAndUpdate(req.params.id , req.body)
+        res.send({
+            status : "Details updated" , ...req.body 
+        })
+    }catch(e){
+        if(e.message.includes('Cast to ObjectId failed for value'))
+        {
+            res.send({error :  "invalid bike Id"})
+        }
+        res.send({error : e.message} )
+    }
+
 })
 
 // #delete bike
-router.delete('/bike/:id' ,(req ,res)=> {
-    res.send('bike deleted');
+router.delete('/bike/:id' ,async(req ,res)=> {
+    try{
+        const bike = await Bikes.findByIdAndDelete(req.params.id )
+        if(!bike)
+        {
+            res.send({error : "no bike is present with this id"})
+        }
+
+        res.send({
+            status : "bike deleted"
+        })
+    }catch(e){
+        if(e.message.includes('Cast to ObjectId failed for value'))
+        {
+            res.send({error :  "invalid bike Id"})
+        }
+        res.send({error : e.message} )
+    }
 })
 
 
@@ -81,20 +122,59 @@ router.get('/bikes' ,async(req,res)=> {
 })
 
 // #get bikes by bike types
-router.get('/bikes/:biketype' ,(req,res) => [
-    res.send("bikes by bike types")
-] )
+router.get('/bikes/:biketype' ,async(req,res) => {
+    
+    // vlaidating the bike type
+    try {
+      const bikeTypte = await BikeType.find({ name: req.params.biketype });
+      if (bikeTypte.length === 0) {
+        res.send({
+          error: "invalid bike type",
+        });
+      }
+    } catch (e) {
+      res.send({ error: e });
+    }
+
+
+    try {
+        const bike = await Bikes.find({ name: req.params.biketype });
+        res.send(bike)
+    } catch (e) {
+        res.send({ error: e.message })
+    }
+
+})
     
 // #get most recent regestered bikes 
 router.get('/bike/recent', (req,res)=> {
     res.send("List of recent bikes")
 } )
 
+
 // #get most liked bikes
 
-    router.get('/bike/mostlike' , (req,res)=> [
+    router.get('/bike/mostlike' , async(req,res)=> {
+        const bikesList= []
+        try{
+            const bikeTypeslist = await BikesType.find()
+            for(const i of bikeTypeslist )
+            {
+                bikesList.push(i.name);
+            }
+            res.send(bikesList)
+            
+
+            
+
+
+         }
+        catch(e){
+            res.send({error : e.message})
+        }
+
         res.send("most liked bikes")
-    ])
+    })
 
 
 // comment handler
@@ -121,7 +201,12 @@ router.get('/bike/recent', (req,res)=> {
 
         try{
             const bike = await Bikes.findByIdAndUpdate(req.params.id , req.body)
+            if(!bike)
+            {
+                res.send({error : "no bike is present with this id"})
+            }
             
+
             res.send({...req.body , status : "comment updated for the bike"})
 
         }catch(e){
@@ -130,6 +215,23 @@ router.get('/bike/recent', (req,res)=> {
        
     })
 
+//  Like a bike
+
+    router.get('/bike/like/:bikeid' , async(req,res)=> {
+        try{
+            const bike = await Bikes.findByIdAndUpdate(req.params.bikeid , {liked : true})
+            if(!bike)
+            {
+                res.send({error : "No bike with this id is found"})
+            }
+            res.send({stauts : "You have liked this bike"} )
+
+        }catch(e)
+        {
+            res.send({error : e.message})
+        }
 
 
+    })
+ 
     module.exports = router

@@ -4,15 +4,15 @@ Need to create Project for registering new bikes.where user should be able to re
 and user can like and dislike bikes.can get bikes of the most liked bikes.and recently registered bikes and user can comment on bikes.
 
 APIS- 
-      #register user
-      #login user
-      #create bike types
-      #get all bike types
-      #create bike
-      #edit bike
-      #delete bike
-      #get all bikes
-      #get bikes by bike types
+      #register user (done)
+      #login user (done )
+      #create bike types (done)
+      #get all bike types (done)
+      #create bike (done)
+      #edit bike (done)
+      #delete bike (done )
+      #get all bikes (done)
+      #get bikes by bike types (done)
       #get most recent regestered bikes 
-      #get most liked bikes
-      #comment on bike
+      #get most liked bikes 
+      #comment on bike  (done)
