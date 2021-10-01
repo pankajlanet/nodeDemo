@@ -124,7 +124,7 @@ router.get('/bikes' ,async(req,res)=> {
 // #get bikes by bike types
 router.get('/bikes/:biketype' ,async(req,res) => {
     
-    // vlaidating the bike type
+    // validating the bike type
     try {
       const bikeTypte = await BikeType.find({ name: req.params.biketype });
       if (bikeTypte.length === 0) {
@@ -147,34 +147,34 @@ router.get('/bikes/:biketype' ,async(req,res) => {
 })
     
 // #get most recent regestered bikes 
-router.get('/bike/recent', (req,res)=> {
-    res.send("List of recent bikes")
+router.get('/bike/recent', async(req,res)=> {
+    // const latest = await  Bikes.find().sort({ _id: -1 }).limit(1)
+    // res.send(latest)
+
+    const latest = await Bikes.find().sort({ createdAt: -1 }).limit(1) 
+    res.send(latest)
+    
 } )
 
 
 // #get most liked bikes
 
-    router.get('/bike/mostlike' , async(req,res)=> {
-        const bikesList= []
-        try{
-            const bikeTypeslist = await BikesType.find()
-            for(const i of bikeTypeslist )
-            {
-                bikesList.push(i.name);
-            }
-            res.send(bikesList)
-            
-
-            
-
-
-         }
-        catch(e){
-            res.send({error : e.message})
+    router.get("/bike/mostlike", async (req, res) => {
+      const bikesList = [];
+      try {
+        // getting the list of bikes
+        const bikeTypeslist = await BikesType.find();
+        for (const i of bikeTypeslist) {
+          bikesList.push(i.name);
         }
 
-        res.send("most liked bikes")
-    })
+        res.send(bikesList);
+      } catch (e) {
+        res.send({ error: e.message });
+      }
+
+      res.send("most liked bikes");
+    });
 
 
 // comment handler
