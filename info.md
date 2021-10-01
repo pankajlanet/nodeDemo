@@ -5,7 +5,7 @@ and user can like and dislike bikes.can get bikes of the most liked bikes.and re
 
 APIS- 
       #register user (done)
-      #login user (done )
+      #login user 
       #create bike types (done)
       #get all bike types (done)
       #create bike (done)
