@@ -199,20 +199,18 @@ router.get("/bike/recent", auth, async (req, res) => {
 // #get most liked bikes
 
 router.get("/bike/mostlike", auth, async (req, res) => {
-  const bikesList = [];
-  try {
-    // getting the list of bikes
-    const bikeTypeslist = await BikesType.find();
-    for (const i of bikeTypeslist) {
-      bikesList.push(i.name);
-    }
-
-    res.status(200).send(bikesList);
-  } catch (e) {
-    res.status(400).send({ error: e.message });
+  try{
+    const bike = await Bikes.find()
+    bike.filter(val => {
+      val.likes
+    })
+    
+  }
+  catch(e)
+  {
+    res.status(400).send({error : e.message})
   }
 
-  res.send("most liked bikes");
 });
 
 // comment handler
@@ -289,10 +287,11 @@ router.get("/bike/dislike/:bikeid", auth, async (req, res) => {
     if (isPresent.length !== 0) {
       
         const filtered = bike.likes.filter((val) => val._id !== req.user.email)
-        res.send(filtered)
+        bike.likes =  bike.likes.concat(object);
+        await bike.save()
       //   bike.likes = bike.likes.concat(object)
       // await bike.save()
-      // res.send({status : "liked"})
+      res.send({status : "disliked"})
     }
     res.status(400).send("Noting to unlike");
   } catch (e) {
