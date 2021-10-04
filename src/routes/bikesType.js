@@ -30,12 +30,12 @@ router.post('/bikes/create_type' , auth, async(req , res) => {
     const allowedUpdates = ["name"]
     if(check.length === 0)
     {
-        res.status(400).send({error : "Please enter the information in body"})
+        res.status(400).send({error : "Send_Info_in_Body" })
     }   
     const validCheckArr =  check.every(val => allowedUpdates.includes(val))
     if(!validCheckArr)
     {
-        res.status(403).send({ err: "extra updates are not allowed"})
+        res.status(401).send({error : "Extra_Entry_Not_Allowed"});
     }
 
 
@@ -50,10 +50,10 @@ router.post('/bikes/create_type' , auth, async(req , res) => {
     {
         if(e.message.includes('E11000 duplicate key error collection: bike-register-api.biketypes index: name_1 dup key: '))
         {
-            res.send({error : "This model is already present"})
+            res.status(403).send({error : "Model_Already_Present"})
         }
 
-        res.send({
+        res.status(400).send({
             error : e.message
         })
     }

@@ -6,26 +6,17 @@ const BikeType = require("../models/BikeType");
 const BikesType = require("../models/BikeType");
 
 // #create bike
-router.post("/bike",auth ,  async (req, res) => {
+router.post("/bike", auth, async (req, res) => {
   const updates = Object.keys(req.body);
   if (updates.length === 0) {
-    res.status(400).send({
-      error: "Please enter dome details in body",
-    });
+    res.status(400).send({error: "Send_Info_in_Body"});
   }
 
-  const allowedUpdates = [
-    "company",
-    "maxspeed",
-    "price",
-    "liked",
-    "comment",
-    "name",
-  ];
+  const allowedUpdates = [ "company",  "maxspeed",  "price",  "liked",  "comment",  "name",];
   const valid = updates.every((val) => allowedUpdates.includes(val));
   if (!valid) {
-    res.status(400).send({
-      error: "extra updates are not allowed",
+    res.status(401).send({
+      error: "Extra_Entry_Not_Allowed",
     });
   }
   ///  Validating the bike type
@@ -33,10 +24,10 @@ router.post("/bike",auth ,  async (req, res) => {
     const checkBike = await BikesType.find({ name: req.body.name });
     console.log(checkBike);
     if (checkBike.length === 0) {
-      res.send("bike with certain model is not present");
+      res.status(400).send("Bike_Type_Invalid");
     }
   } catch (e) {
-    res.send({ error: e.message });
+    res.status(400).send({ error: e.message });
   }
 
   // validating bike is already present or not
@@ -45,14 +36,17 @@ router.post("/bike",auth ,  async (req, res) => {
       compositekey: req.body.company + req.body.name,
     });
     if (alreadypresentCheck.length !== 0) {
-      res.send({
-        error: "This bike is already present",
+      res.status(403).send({
+        error: "Bike_Already_Present",
       });
     } else {
       try {
         const bike = await new Bikes({
           ...req.body,
           compositekey: req.body.company + req.body.name,
+          creatorName : req.user.name,
+          creatorMail : req.user.email
+
         });
         await bike.save();
         res.status(201).send({ status: "bike created ", ...req.body });
@@ -61,14 +55,34 @@ router.post("/bike",auth ,  async (req, res) => {
         res.status(400).send({ error: e.message });
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    res.status(500).send({error :"Internal_Server_Error(DataBase)"})
+  }
 
   //creating the new bike
 });
 
 // #edit bike
 
-router.patch("/bike/:id",auth , async (req, res) => {
+router.patch("/bike/:id", auth, async (req, res) => {
+
+  try{
+    const bike = await Bikes.findById(req.params.id)
+    if(!bike)
+    {
+      res.status(400).send({error : "No_Bike_present_With_this_id"})
+    }
+    if(bike.creatorMail !== req.user.email)
+    { 
+      res.status(401).send({ error : "User_Not_Allowed_to_Update"})
+    }
+
+  }
+  catch(e){
+    res.status(400).send({error : e.message})
+  }
+
+
   const updates = Object.keys(req.body);
   const allowedUpdates = [
     "company",
@@ -80,7 +94,13 @@ router.patch("/bike/:id",auth , async (req, res) => {
   ];
 
   if (updates.length === 0) {
-    res.send({ error: "please send data in body" });
+    res.status(400).send({ error: "Send_Info_in_Body" });
+  }
+
+  const isValid = updates.every(update => allowedUpdates.includes(update))
+  if(!isValid)
+  {
+    res.status(404).send({error : "Extra_Entry_Not_Allowed"})
   }
 
   try {
@@ -91,7 +111,7 @@ router.patch("/bike/:id",auth , async (req, res) => {
     });
   } catch (e) {
     if (e.message.includes("Cast to ObjectId failed for value")) {
-      res.send({ error: "invalid bike Id" });
+      res.status(400).send({ error: "Invalid_Bike_Id" });
     }
     res.send({ error: e.message });
   }
@@ -99,6 +119,23 @@ router.patch("/bike/:id",auth , async (req, res) => {
 
 // #delete bike
 router.delete("/bike/:id", auth, async (req, res) => {
+  try{
+    const bike = await Bikes.findById(req.params.id)
+    if(!bike)
+    {
+      res.send({error : "No bike is present with this id"})
+    }
+    if(bike.creatorMail !== req.user.email)
+    { 
+      res.send({ error : "You are not allowed to Delete"})
+    }
+
+  }
+  catch(e){
+    res.status(400).send({error : e.message})
+  }
+
+
   try {
     const bike = await Bikes.findByIdAndDelete(req.params.id);
     if (!bike) {
@@ -117,46 +154,51 @@ router.delete("/bike/:id", auth, async (req, res) => {
 });
 
 // #get all bikes
-router.get("/bikes",auth, async (req, res) => {
+router.get("/bikes", auth, async (req, res) => {
   try {
     const bikes = await Bikes.find();
     res.send(bikes);
   } catch (e) {
-    res.send("error", e);
+    res.send(error, e);
   }
 });
 
 // #get bikes by bike types
-router.get("/bikes/:biketype", auth,async (req, res) => {
+router.get("/bikes/:biketype", auth, async (req, res) => {
   // validating the bike type
   try {
     const bikeTypte = await BikeType.find({ name: req.params.biketype });
     if (bikeTypte.length === 0) {
-      res.send({
-        error: "invalid bike type",
-      });
+      res.status(400).send({error: "Invalid_Bike_Type"  });
     }
   } catch (e) {
-    res.send({ error: e });
+    res.status(400).send({ error: e });
   }
 
   try {
     const bike = await Bikes.find({ name: req.params.biketype });
-    res.send(bike);
+    res.status(200).send(bike);
   } catch (e) {
-    res.send({ error: e.message });
+    res.status(400).send({ error: e.message });
   }
 });
 
 // #get most recent regestered bikes
-router.get("/bike/recent",auth , async (req, res) => {
+router.get("/bike/recent", auth, async (req, res) => {
+    try{
+
   const latest = await Bikes.find().sort({ createdAt: -1 }).limit(1);
   res.send(latest);
+    }
+    catch(e)
+    {
+      res.status(500).send({error : e.message})
+    }
 });
 
 // #get most liked bikes
 
-router.get("/bike/mostlike",auth ,async (req, res) => {
+router.get("/bike/mostlike", auth, async (req, res) => {
   const bikesList = [];
   try {
     // getting the list of bikes
@@ -165,9 +207,9 @@ router.get("/bike/mostlike",auth ,async (req, res) => {
       bikesList.push(i.name);
     }
 
-    res.send(bikesList);
+    res.status(200).send(bikesList);
   } catch (e) {
-    res.send({ error: e.message });
+    res.status(400).send({ error: e.message });
   }
 
   res.send("most liked bikes");
@@ -175,34 +217,31 @@ router.get("/bike/mostlike",auth ,async (req, res) => {
 
 // comment handler
 
-router.post("/bike/comment/",auth ,(req, res) => [
-  res.send({ error: "Please enter the id in paramas" }),
+router.post("/bike/comment/", auth, (req, res) => [
+  res.status(400).send({ error: "Please_Enter_Id" }),
 ]);
 
 // #comment on bike
-router.post("/bike/comment/:id",auth ,async (req, res) => {
+router.post("/bike/comment/:id", auth, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdate = ["comment"];
   if (updates.length === 0) {
-    res.send({ error: "Please send the comment in body" });
+    res.status(400).send({error : "Send_Info_in_Body" })
   }
   const valid = updates.every((val) => allowedUpdate.includes(val));
   if (!valid) {
-    res.send({
-      error: "extra updates are not allowed",
-    });
+    res.status(401).send({error : "Extra_Entry_Not_Allowed"})
   }
 
   try {
-    const bike = await Bikes.findById(req.params.id)
+    const bike = await Bikes.findById(req.params.id);
     bike.comments = bike.comments.concat({
-      _id : req.user.email,
-      name  : req.user.name,
-      comment : req.body.comment
-    })
+      _id: req.user.email,
+      name: req.user.name,
+      comment: req.body.comment,
+    });
     await bike.save();
-    res.send(bike)
-
+    res.status(200).send(bike);
   } catch (e) {
     res.status(400).send({ error: e.message });
   }
@@ -210,60 +249,55 @@ router.post("/bike/comment/:id",auth ,async (req, res) => {
 
 //  Like a bike
 
-router.get("/bike/like/:bikeid",auth ,  async (req, res) => {
+router.get("/bike/like/:bikeid", auth, async (req, res) => {
+
   try {
     const bike = await Bikes.findById(req.params.bikeid);
     const object = {
-      _id : req.user.email,
-      name : req.user.name,
-      liked : true
-    } 
+      _id: req.user.email,
+      name: req.user.name,
+      liked: true,
+    };
 
-    const isPresent =  bike.likes.filter(val => val._id === req.user.email )
-    if(isPresent.length === 0)
-    {
-      bike.likes = bike.likes.concat(object)
-    await bike.save()
-    res.send({status : "liked"})
+    const isPresent = bike.likes.filter((val) => val._id === req.user.email);
+    if (isPresent.length === 0) {
+      bike.likes = bike.likes.concat(object);
+      await bike.save();
+      res.send({ status: "liked" });
     }
-     res.send("You have already liked it")
+    res.status(403).send("Already_Liked");
   } catch (e) {
-    res.send({ error: e.message });
+    res.status(400).send({ error: e.message });
   }
 });
 
 //dislike bike
-router.get("/bike/dislike/:bikeid",auth ,  async (req, res) => {
+router.get("/bike/dislike/:bikeid", auth, async (req, res) => {
   try {
     const bike = await Bikes.findById(req.params.bikeid);
-    if(!bike)
-    {
-      res.send("invalid id")
+    if (!bike) {
+      res.status(400).send("invalid id");
     }
 
     const object = {
-      _id : req.user.email,
-      name : req.user.name,
-      liked : false
-    } 
+      _id: req.user.email,
+      name: req.user.name,
+      liked: false,
+    };
 
-    const isPresent =  bike.likes.filter(val => val._id === req.user.email )
-    if(isPresent.length !== 0)
-    {
-      const upda = Bikes.findByIdAndUpdate( req.params.bikeid, {$set : {
-          
-      }})
-    //   bike.likes = bike.likes.concat(object)
-    // await bike.save()
-    // res.send({status : "liked"})
+    const isPresent = bike.likes.filter((val) => val._id === req.user.email);
+    if (isPresent.length !== 0) {
+      
+        const filtered = bike.likes.filter((val) => val._id !== req.user.email)
+        res.send(filtered)
+      //   bike.likes = bike.likes.concat(object)
+      // await bike.save()
+      // res.send({status : "liked"})
     }
-     res.send("Noting to unlike")
+    res.status(400).send("Noting to unlike");
   } catch (e) {
     res.send({ error: e.message });
   }
-
 });
-
-
 
 module.exports = router;

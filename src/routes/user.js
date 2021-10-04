@@ -9,10 +9,10 @@ router.post("/user", async (req, res) => {
     // validating user
     const updates = Object.keys(req.body)
     const allowedUpdates = ['name' , "email" , "password"]    
-    if(!req.body)
+    if(updates.length === 0)
     {
         res.status(400).send({
-            error : "Please send the info in the body"
+            error : "Send_Info_in_Body"
         })
     }
 
@@ -20,18 +20,9 @@ router.post("/user", async (req, res) => {
     if(!valid)
     {
         res.status(401).send({
-            error : "extra updates are not allowed"
+            error : "Extra_Entry_Not_Allowed"
         })
     }
-
-
-
-  console.log(req.body);
-  if (!req.body) {
-    res.status(400).send({
-      error: "please send the info in body",
-    });
-  }
 
   try {
   
@@ -43,7 +34,12 @@ router.post("/user", async (req, res) => {
   } catch (e) {
     if(e.message.includes('E11000 duplicate key error collection: bike-register-api.users index: email_1 dup key:'))
     {
-      res.send({error : "Email id already exist"})
+      //resource cannot be created becouse it is already present
+      res.status(403).send({error : "Email_Already_Exist"})
+    }
+    else if('User validation failed: password: weak password')
+    {
+      res.send({error : "Weak_Password"})
     }
 
     res.status(400).send({ error: e.message });
@@ -58,31 +54,13 @@ router.post("/user/login", async(req, res) => {
 
   if(updates.length === 0)
   {
-    res.send({error : "Please send the information in body"})
+    res.status(400).send({error : "Send_Info_in_Body"})
   }
   const isValid = updates.every(val => allowedUpdates.includes(val)) 
   if(!isValid)
   {
-    res.send({error : "extra values are not allowed"})
+    res.status(401).send({error : "Extra_Entry_Not_Allowed"})
   }
-
-  // try {
-  //   const user = await User.findByCredentials(
-  //     req.body.email,
-  //     req.body.password
-  //   );
-  // } catch (e) {
-  //   res.send({ type : "user" ,  error: e.message });
-  // }
-
-  // try{
-  //   const token = await user.generateAuthToken()
-  //   res.send(user, token)
-  // }
-  // catch(e)
-  // {
-  //   res.send({type : "token" ,error : e.message})
-  // }
 
   try {
     const user = await User.findByCredentials(req.body.email, req.body.password)
@@ -113,7 +91,7 @@ router.get( '/user/logout', auth  , async(req,res)=> {
     req.user.tokens = []
     await req.user.save()
 
-    res.send({status : "User Logged Out"})
+    res.status(200).send({status : "User_LoggedOut_Sucessfully"})
   } catch (e) {
     res.status(500).send({ error: e.message })
   }
