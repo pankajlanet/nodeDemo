@@ -11,8 +11,10 @@ APIS-
       #create bike (done)
       #edit bike (done)
       #delete bike (done )
-      #get all bikes (done)
-      #get bikes by bike types (done)
-      #get most recent regestered bikes 
-      #get most liked bikes 
-      #comment on bike  (done)
+      #get all bikes (done)    all
+      #get bikes by bike types (done) all
+       #get most recent regestered bikes  all
+      #get most liked bikes  all
+      #comment on bike  (done) all
+
+      dislike

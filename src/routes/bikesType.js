@@ -1,6 +1,7 @@
 const express = require('express');
 const router =  express.Router();
 const BikesType = require('../models/BikeType')
+const auth = require('../middleware/auth')
 
 
 
@@ -22,7 +23,7 @@ const BikesType = require('../models/BikeType')
                                     // Bikes Type
 //********************************************************************************************** */
 // #get all bike types
-router.post('/bikes/create_type' ,async(req , res) => {
+router.post('/bikes/create_type' , auth, async(req , res) => {
 
     //validation
     const check = Object.keys(req.body)
@@ -58,7 +59,7 @@ router.post('/bikes/create_type' ,async(req , res) => {
     }
 } )
 
-router.get('/bikes/all_type' ,async(req,res)=> {
+router.get('/bikes/all_type' ,auth,async(req,res)=> {
     try{
     const bikeslist = await BikesType.find()
     res.send(bikeslist)

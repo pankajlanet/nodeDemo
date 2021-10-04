@@ -6,7 +6,7 @@ const BikeType = require("../models/BikeType");
 const BikesType = require("../models/BikeType");
 
 // #create bike
-router.post("/bike", async (req, res) => {
+router.post("/bike",auth ,  async (req, res) => {
   const updates = Object.keys(req.body);
   if (updates.length === 0) {
     res.status(400).send({
@@ -98,7 +98,7 @@ router.patch("/bike/:id",auth , async (req, res) => {
 });
 
 // #delete bike
-router.delete("/bike/:id", async (req, res) => {
+router.delete("/bike/:id", auth, async (req, res) => {
   try {
     const bike = await Bikes.findByIdAndDelete(req.params.id);
     if (!bike) {
@@ -117,7 +117,7 @@ router.delete("/bike/:id", async (req, res) => {
 });
 
 // #get all bikes
-router.get("/bikes",auth ,async (req, res) => {
+router.get("/bikes",auth, async (req, res) => {
   try {
     const bikes = await Bikes.find();
     res.send(bikes);
@@ -127,7 +127,7 @@ router.get("/bikes",auth ,async (req, res) => {
 });
 
 // #get bikes by bike types
-router.get("/bikes/:biketype", async (req, res) => {
+router.get("/bikes/:biketype", auth,async (req, res) => {
   // validating the bike type
   try {
     const bikeTypte = await BikeType.find({ name: req.params.biketype });
@@ -149,14 +149,14 @@ router.get("/bikes/:biketype", async (req, res) => {
 });
 
 // #get most recent regestered bikes
-router.get("/bike/recent", async (req, res) => {
+router.get("/bike/recent",auth , async (req, res) => {
   const latest = await Bikes.find().sort({ createdAt: -1 }).limit(1);
   res.send(latest);
 });
 
 // #get most liked bikes
 
-router.get("/bike/mostlike", async (req, res) => {
+router.get("/bike/mostlike",auth ,async (req, res) => {
   const bikesList = [];
   try {
     // getting the list of bikes
@@ -175,12 +175,12 @@ router.get("/bike/mostlike", async (req, res) => {
 
 // comment handler
 
-router.post("/bike/comment/", (req, res) => [
+router.post("/bike/comment/",auth ,(req, res) => [
   res.send({ error: "Please enter the id in paramas" }),
 ]);
 
 // #comment on bike
-router.post("/bike/comment/:id", async (req, res) => {
+router.post("/bike/comment/:id",auth ,async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdate = ["comment"];
   if (updates.length === 0) {
@@ -194,12 +194,15 @@ router.post("/bike/comment/:id", async (req, res) => {
   }
 
   try {
-    const bike = await Bikes.findByIdAndUpdate(req.params.id, req.body);
-    if (!bike) {
-      res.send({ error: "no bike is present with this id" });
-    }
+    const bike = await Bikes.findById(req.params.id)
+    bike.comments = bike.comments.concat({
+      _id : req.user.email,
+      name  : req.user.name,
+      comment : req.body.comment
+    })
+    await bike.save();
+    res.send(bike)
 
-    res.send({ ...req.body, status: "comment updated for the bike" });
   } catch (e) {
     res.status(400).send({ error: e.message });
   }
@@ -207,18 +210,60 @@ router.post("/bike/comment/:id", async (req, res) => {
 
 //  Like a bike
 
-router.get("/bike/like/:bikeid", async (req, res) => {
+router.get("/bike/like/:bikeid",auth ,  async (req, res) => {
   try {
-    const bike = await Bikes.findByIdAndUpdate(req.params.bikeid, {
-      liked: true,
-    });
-    if (!bike) {
-      res.send({ error: "No bike with this id is found" });
+    const bike = await Bikes.findById(req.params.bikeid);
+    const object = {
+      _id : req.user.email,
+      name : req.user.name,
+      liked : true
+    } 
+
+    const isPresent =  bike.likes.filter(val => val._id === req.user.email )
+    if(isPresent.length === 0)
+    {
+      bike.likes = bike.likes.concat(object)
+    await bike.save()
+    res.send({status : "liked"})
     }
-    res.send({ stauts: "You have liked this bike" });
+     res.send("You have already liked it")
   } catch (e) {
     res.send({ error: e.message });
   }
 });
+
+//dislike bike
+router.get("/bike/dislike/:bikeid",auth ,  async (req, res) => {
+  try {
+    const bike = await Bikes.findById(req.params.bikeid);
+    if(!bike)
+    {
+      res.send("invalid id")
+    }
+
+    const object = {
+      _id : req.user.email,
+      name : req.user.name,
+      liked : false
+    } 
+
+    const isPresent =  bike.likes.filter(val => val._id === req.user.email )
+    if(isPresent.length !== 0)
+    {
+      const upda = Bikes.findByIdAndUpdate( req.params.bikeid, {$set : {
+          
+      }})
+    //   bike.likes = bike.likes.concat(object)
+    // await bike.save()
+    // res.send({status : "liked"})
+    }
+     res.send("Noting to unlike")
+  } catch (e) {
+    res.send({ error: e.message });
+  }
+
+});
+
+
 
 module.exports = router;

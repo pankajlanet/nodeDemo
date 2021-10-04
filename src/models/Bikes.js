@@ -13,11 +13,8 @@ const bikeSchema = new mongoose.Schema({
   price: {
     type: Number,
   },
-  liked: {
-    type: Boolean,
-    lowercase: true,
-    lowercase: true,
-    trim: true
+  likes:{
+    type : Array
   },
   name : {
       type : String,
@@ -25,10 +22,8 @@ const bikeSchema = new mongoose.Schema({
       lowercase : true,
       trim : true
   },
-  comment: {
-    type: String,
-    lowercase: true,
-    trim: true,
+  comments: {
+    type : Array,
   },
 
   compositekey : {
