@@ -39,6 +39,10 @@ const bikeSchema = new mongoose.Schema({
     type : String,
     lowercase : true,
     trim : true
+  },
+  likecount : {
+    type :Number,
+    default : 0
   }
 }
 , {timestamps :true});

@@ -100,7 +100,7 @@ router.patch("/bike/:id", auth, async (req, res) => {
   const isValid = updates.every(update => allowedUpdates.includes(update))
   if(!isValid)
   {
-    res.status(404).send({error : "Extra_Entry_Not_Allowed"})
+    res.status(401).send({error : "Extra_Entry_Not_Allowed"})
   }
 
   try {
@@ -123,11 +123,11 @@ router.delete("/bike/:id", auth, async (req, res) => {
     const bike = await Bikes.findById(req.params.id)
     if(!bike)
     {
-      res.send({error : "No bike is present with this id"})
+      res.status(400).send({error : "No bike is present with this id"})
     }
     if(bike.creatorMail !== req.user.email)
     { 
-      res.send({ error : "You are not allowed to Delete"})
+      res.status(200).send({ error : "You are not allowed to Delete"})
     }
 
   }
@@ -201,9 +201,13 @@ router.get("/bike/recent", auth, async (req, res) => {
 router.get("/bike/mostlike", auth, async (req, res) => {
   try{
     const bike = await Bikes.find()
-    bike.filter(val => {
-      val.likes
-    })
+    bike.sort((a,b)=> b -a);
+    if(bike[0].likecount === 0)
+    {
+      res.status(200).send({status : "No_bike_is_liked_till_now"})
+    }
+
+    res.status(200).send(bike[0])
     
   }
   catch(e)
@@ -260,6 +264,7 @@ router.get("/bike/like/:bikeid", auth, async (req, res) => {
     const isPresent = bike.likes.filter((val) => val._id === req.user.email);
     if (isPresent.length === 0) {
       bike.likes = bike.likes.concat(object);
+      bike.likecount = bike.likecount + 1;
       await bike.save();
       res.send({ status: "liked" });
     }
@@ -277,23 +282,28 @@ router.get("/bike/dislike/:bikeid", auth, async (req, res) => {
       res.status(400).send("invalid id");
     }
 
-    const object = {
-      _id: req.user.email,
-      name: req.user.name,
-      liked: false,
-    };
-
     const isPresent = bike.likes.filter((val) => val._id === req.user.email);
-    if (isPresent.length !== 0) {
-      
-        const filtered = bike.likes.filter((val) => val._id !== req.user.email)
-        bike.likes =  bike.likes.concat(object);
-        await bike.save()
-      //   bike.likes = bike.likes.concat(object)
-      // await bike.save()
-      res.send({status : "disliked"})
+    if(isPresent.length === 0)
+    {
+      res.status(400).send({status  :"Noting to unlike"});
     }
-    res.status(400).send("Noting to unlike");
+    const filtered  = bike.likes.filter((val) => val._id !== req.user.email);
+    bike.likes = filtered;
+    bike.likecount = bike.likecount-1;
+    bike.save()
+    res.send({status : "bike unliked" })
+
+    // if (isPresent.length !== 0) {
+        
+    //     const filtered = bike.likes.filter((val) => val._id !== req.user.email)
+    //     bike.likes =  bike.likes.concat(object);
+    //     bike.likecount = bike.likecount -1;
+    //     await bike.save()
+    //   //   bike.likes = bike.likes.concat(object)
+    //   // await bike.save()
+    //   res.send({status : "disliked"})
+    // }
+    // res.status(400).send("Noting to unlike");
   } catch (e) {
     res.send({ error: e.message });
   }
